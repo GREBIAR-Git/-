@@ -13,7 +13,7 @@ public class Room
 
     public Organization? Organization { get; set; }
 
-    public List<Queue>? Queues { get; set; }
+    public List<Queue> Queues { get; set; } = new();
 
-    public List<Favorite>? Favorites { get; set; }
+    public List<Favorite> Favorites { get; set; } = new();
 }

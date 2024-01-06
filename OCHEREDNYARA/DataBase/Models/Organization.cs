@@ -18,6 +18,6 @@ public class Organization
 
     public int Password { get; set; }
 
-    public List<Room>? Rooms { get; set; }
+    public List<Room> Rooms { get; set; } = new();
 
 }

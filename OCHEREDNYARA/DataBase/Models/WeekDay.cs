@@ -9,6 +9,6 @@ namespace DataBase.Models
 
         public string? Name { get; set; }
 
-        public List<Window>? Windows { get; set; }
+        public List<Window> Windows { get; set; } = new();
     }
 }

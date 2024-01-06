@@ -7,13 +7,9 @@ public class Window
     [Key]
     public long Id { get; set; }
 
-    [DataType(DataType.Time)]
-    [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:HH:mm}")]
-    public DateTime? Start { get; set; }
+    public DateTime Start { get; set; }
 
-    [DataType(DataType.Time)]
-    [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:HH:mm}")]
-    public DateTime? End { get; set; }
+    public DateTime End { get; set; }
 
     public long QueueId { get; set; }
 
@@ -23,5 +19,5 @@ public class Window
 
     public Queue? Queue { get; set; }
 
-    public List<Reserved>? Reserveds { get; }
+    public List<Reserved> Reserveds { get; } = new();
 }

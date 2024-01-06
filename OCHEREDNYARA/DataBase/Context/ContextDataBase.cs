@@ -5,14 +5,14 @@ namespace DataBase.Context;
 
 public class ContextDataBase : DbContext
 {
-    public DbSet<Client> Clients { get; set; }
-    public DbSet<Queue> Queues { get; set; }
-    public DbSet<Room> Rooms { get; set; }
-    public DbSet<Window> Windows { get; set; }
-    public DbSet<Organization> Organizations { get; set; }
-    public DbSet<Reserved> Reserveds { get; set; }
-    public DbSet<Favorite> Favorites { get; set; }
-    public DbSet<WeekDay> WeekDays { get; set; }
+    DbSet<Client> Clients { get; set; }
+    DbSet<Queue> Queues { get; set; }
+    DbSet<Room> Rooms { get; set; }
+    DbSet<Window> Windows { get; set; }
+    DbSet<Organization> Organizations { get; set; }
+    DbSet<Reserved> Reserveds { get; set; }
+    DbSet<Favorite> Favorites { get; set; }
+    DbSet<WeekDay> WeekDays { get; set; }
 
 
     public ContextDataBase()
@@ -128,7 +128,7 @@ public class ContextDataBase : DbContext
     async Task<bool> AddWeekDay(string name)
     {
         List<WeekDay> weekDays = await WeekDays.Where(p => p.Name == name).ToListAsync();
-        if (weekDays.Count != 0)
+        if (weekDays.Count == 0)
         {
             WeekDay weekDay = new() { Name = name };
             await WeekDays.AddAsync(weekDay);
@@ -151,10 +151,10 @@ public class ContextDataBase : DbContext
         return await WeekDays.Where(p => p.Id == id).FirstOrDefaultAsync();
     }
 
-    public async Task<bool> AddWindow(long queueId, long weekDayId, DateTime? start, DateTime? end)
+    public async Task<bool> AddWindow(long queueId, long weekDayId, DateTime start, DateTime end)
     {
         List<Window> windows = await Windows.Where(p => p.QueueId == queueId && p.WeekDayId == weekDayId && p.Start == start && p.End == end).ToListAsync();
-        if (windows.Count != 0)
+        if (windows.Count == 0)
         {
             Window window = new() { QueueId = queueId, WeekDayId = weekDayId, Start = start, End = end };
             await Windows.AddAsync(window);
@@ -273,12 +273,16 @@ public class ContextDataBase : DbContext
         List<Window> windows = await GetWindows(idQueue, idWeekDay);
         if (start < end)
         {
-            foreach (Window window in windows)
+            if (windows.Count > 0)
             {
-                if (!(start < window.Start && end <= window.Start && start >= window.End && end > window.Start))
+                foreach (Window window in windows)
                 {
-                    return false;
+                    if ((start < window.Start && end <= window.Start || start >= window.End && end > window.End))
+                    {
+                        return true;
+                    }
                 }
+                return false;
             }
             return true;
         }
@@ -408,6 +412,8 @@ public class ContextDataBase : DbContext
         List<Organization> organizations = await Organizations.ToListAsync();
         if (organization != null && organization.Rooms != null)
         {
+            await Rooms.Include(u => u.Queues).ToListAsync();
+            await Rooms.Include(u => u.Favorites).ToListAsync();
             return organization.Rooms;
         }
         else
@@ -439,6 +445,7 @@ public class ContextDataBase : DbContext
         if (organization is not null && organization.Rooms is not null)
         {
             await Rooms.Include(u => u.Favorites).ToListAsync();
+            await Rooms.Include(u => u.Queues).ToListAsync();
             return organization.Rooms;
         }
         else

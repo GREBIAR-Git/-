@@ -15,7 +15,7 @@ public class Client
     [Column("THEME")]
     public int Theme { get; set; }
 
-    public ICollection<Reserved>? Reserveds { get; set; }
+    public List<Reserved> Reserveds { get; set; } = new();
 
-    public ICollection<Favorite>? Favorites { get; set; }
+    public List<Favorite> Favorites { get; set; } = new();
 }

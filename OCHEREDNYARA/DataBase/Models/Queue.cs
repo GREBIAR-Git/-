@@ -13,5 +13,5 @@ public class Queue
 
     public Room? Room { get; set; }
 
-    public List<Window>? Windows { get; set; }
+    public List<Window> Windows { get; set; } = new();
 }
