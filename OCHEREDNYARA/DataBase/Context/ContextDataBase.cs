@@ -273,16 +273,12 @@ public class ContextDataBase : DbContext
         List<Window> windows = await GetWindows(idQueue, idWeekDay);
         if (start < end)
         {
-            if (windows.Count > 0)
+            foreach (Window window in windows)
             {
-                foreach (Window window in windows)
+                if (!(start < window.Start && end <= window.Start || start >= window.End && end > window.End))
                 {
-                    if ((start < window.Start && end <= window.Start || start >= window.End && end > window.End))
-                    {
-                        return true;
-                    }
+                    return false;
                 }
-                return false;
             }
             return true;
         }
@@ -301,7 +297,7 @@ public class ContextDataBase : DbContext
                 {
                     if (oldWindow.Id != window.Id)
                     {
-                        if (!(start < window.Start && end <= window.Start && start >= window.End && end > window.Start))
+                        if (!(start < window.Start && end <= window.Start || start >= window.End && end > window.End))
                         {
                             return false;
                         }
@@ -315,7 +311,9 @@ public class ContextDataBase : DbContext
 
     public async Task<List<Room>> GetRooms(long id)
     {
-        return await Rooms.Where(p => p.OwnerId == id).ToListAsync();
+        List<Room> rooms = await Rooms.Where(p => p.OwnerId == id).ToListAsync();
+        await Rooms.Include(u => u.Queues).ToListAsync();
+        return rooms;
     }
 
     public async Task<Room?> GetRoom(long id)
@@ -372,7 +370,9 @@ public class ContextDataBase : DbContext
 
     public async Task<List<Queue>> GetQueues(long id)
     {
-        return await Queues.Where(p => p.RoomId == id).ToListAsync();
+        List<Queue> queues = await Queues.Where(p => p.RoomId == id).ToListAsync();
+        await Queues.Include(u => u.Windows).ToListAsync();
+        return queues;
     }
 
     public async Task<bool> DeleteQueue(long id)
@@ -595,14 +595,15 @@ public class ContextDataBase : DbContext
         Room? room = await Rooms.Where(p => p.Id == id).FirstOrDefaultAsync();
         if (room is not null)
         {
-            room.Name = newName;
-            SaveChanges();
-            return true;
+            Room? room1 = await Rooms.Where(p => p.Name == newName).FirstOrDefaultAsync();
+            if (room1 is null)
+            {
+                room.Name = newName;
+                SaveChanges();
+                return true;
+            }
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     public async Task<bool> EditOrganizationName(long id, string newName)
@@ -610,14 +611,15 @@ public class ContextDataBase : DbContext
         Organization? organization = await Organizations.Where(p => p.Id == id).FirstOrDefaultAsync();
         if (organization is not null)
         {
-            organization.Name = newName;
-            SaveChanges();
-            return true;
+            Organization? organization1 = await Organizations.Where(p => p.Name == newName).FirstOrDefaultAsync();
+            if (organization1 == null)
+            {
+                organization.Name = newName;
+                SaveChanges();
+                return true;
+            }
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     public async Task<bool> FreezUnfreez(long id)
