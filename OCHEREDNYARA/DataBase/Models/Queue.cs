@@ -4,8 +4,7 @@ namespace DataBase.Models;
 
 public class Queue
 {
-    [Key]
-    public long Id { get; set; }
+    [Key] public long Id { get; set; }
 
     public long RoomId { get; set; }
 
@@ -13,5 +12,5 @@ public class Queue
 
     public Room? Room { get; set; }
 
-    public List<Window> Windows { get; set; } = new();
+    public List<Window> Windows { get; set; } = [];
 }

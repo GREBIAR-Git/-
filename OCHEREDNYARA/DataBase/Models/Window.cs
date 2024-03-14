@@ -4,8 +4,7 @@ namespace DataBase.Models;
 
 public class Window
 {
-    [Key]
-    public long Id { get; set; }
+    [Key] public long Id { get; set; }
 
     public DateTime Start { get; set; }
 
@@ -19,5 +18,5 @@ public class Window
 
     public Queue? Queue { get; set; }
 
-    public List<Reserved> Reserveds { get; } = new();
+    public List<Reserved> Reserveds { get; } = [];
 }

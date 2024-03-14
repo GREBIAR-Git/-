@@ -1,4 +1,4 @@
-﻿namespace TelegramBot;
+﻿namespace Organization;
 
 class Program
 {

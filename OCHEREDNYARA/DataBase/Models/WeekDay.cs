@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DataBase.Models
+namespace DataBase.Models;
+
+public class WeekDay
 {
-    public class WeekDay
-    {
-        [Key]
-        public long Id { get; set; }
+    [Key] public long Id { get; set; }
 
-        public string? Name { get; set; }
+    public string? Name { get; set; }
 
-        public List<Window> Windows { get; set; } = new();
-    }
+    public List<Window> Windows { get; set; } = [];
 }

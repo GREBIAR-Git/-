@@ -1,52 +1,33 @@
-﻿using Telegram.Bot;
-using Telegram.Bot.Exceptions;
-using Telegram.Bot.Polling;
+﻿using DataBase.Context;
+using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using TelegramBot;
+using YamlDotNet.RepresentationModel;
 
-namespace TelegramBot;
+namespace Organization;
 
-internal class TelegramOrganizationBot
+class TelegramOrganizationBot : TelegramBotBase
 {
-    readonly string token;
-
-    readonly ITelegramBotClient bot;
-
-    readonly ReceiverOptions receiverOptions;
-
-    readonly Organization organization;
-
     public TelegramOrganizationBot()
     {
-        token = "";
-        organization = new();
-        bot = new TelegramBotClient(token);
-        receiverOptions = new ReceiverOptions
+        YamlMappingNode yaml = ReadingYaml();
+
+        string token = yaml["Token"].ToString();
+        ContextDataBase.ConnectingString = yaml["ConnectionString"].ToString();
+        if (yaml["DataReloading"].ToString() == "Yes")
         {
-            AllowedUpdates = new[]
-            {
-                UpdateType.Message,
-                UpdateType.CallbackQuery
-            },
-            ThrowPendingUpdates = true,
-        };
+            MainDataBase.ResetDB();
+        }
+
+        Bot = new TelegramBotClient(token);
     }
 
-    public async Task Start()
-    {
-        using var cts = new CancellationTokenSource();
-        bot.StartReceiving(UpdateHandler, ErrorHandler, receiverOptions, cts.Token);
-
-        var me = await bot.GetMeAsync();
-        Console.WriteLine($"{me.FirstName} запущен!");
-
-        await Task.Delay(-1);
-    }
-
-    async Task UpdateHandlerMessage(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    protected override async Task UpdateHandlerMessage(ITelegramBotClient botClient, Update update,
+        CancellationToken cancellationToken)
     {
         Message? message = update.Message;
-        if (message != null && message.Text != null)
+        if (message?.Text != null)
         {
             User? user = message.From;
             if (user != null)
@@ -58,85 +39,87 @@ internal class TelegramOrganizationBot
                 switch (message.Type)
                 {
                     case MessageType.Text:
+                    {
+                        if (message.Text == "/signup")
                         {
-                            if (message.Text == "/signup")
-                            {
-                                await organization.Theme0(user.Id);
-                                await organization.SingUp(botClient, chat.Id, user.Id);
-                            }
-                            else if (message.Text == "/getidentificator")
-                            {
-                                await organization.Theme0(user.Id);
-                                await organization.GetIdentificator(botClient, chat.Id, user.Id);
-                            }
-                            else if (message.Text == "/createroom")
-                            {
-                                await organization.Theme0(user.Id);
-                                await organization.AddRoom1(botClient, chat.Id, user.Id);
-                            }
-                            else if (message.Text == "/changename")
-                            {
-                                await organization.Theme0(user.Id);
-                                await organization.ChangeName1(botClient, chat.Id, user.Id);
-                            }
-                            else if (message.Text == "/rooms")
-                            {
-                                await organization.Theme0(user.Id);
-                                await organization.AllRooms(botClient, chat.Id, user.Id);
-                            }
-                            else
-                            {
-                                int theme = await organization.GetTheme(user.Id);
-                                if (theme == 1)
-                                {
-                                    await organization.AddRoom2(botClient, chat.Id, user.Id, message.Text);
-                                    await organization.AllRooms(botClient, chat.Id, user.Id);
-                                }
-                                else if (theme == 2)
-                                {
-                                    await organization.ChangeRoom2(botClient, chat.Id, user.Id, message.Text);
-                                    await organization.AllRooms(botClient, chat.Id, user.Id);
-                                }
-                                else if (theme == 3)
-                                {
-                                    await organization.AddWindow3(botClient, chat.Id, user.Id, message.Text);
-                                }
-                                else if (theme == 4)
-                                {
-                                    organization.AddWindow4(botClient, chat.Id, user.Id, message.Text);
-                                }
-                                else if (theme == 5)
-                                {
-                                    await organization.ChangeTime2(botClient, chat.Id, user.Id, message.Text);
-                                }
-                                else if (theme == 6)
-                                {
-                                    await organization.ChangeTime3(botClient, chat.Id, user.Id, message.Text);
-                                }
-                                else if (theme == 7)
-                                {
-                                    await organization.ChangeName2(botClient, chat.Id, user.Id, message.Text);
-                                }
-                            }
-                            break;
+                            await OrganizationInteractionDB.Theme0(user.Id);
+                            await OrganizationInteractionDB.SingUp(botClient, chat.Id, user.Id);
                         }
+                        else if (message.Text == "/getidentificator")
+                        {
+                            await OrganizationInteractionDB.Theme0(user.Id);
+                            await OrganizationInteractionDB.GetIdentificator(botClient, chat.Id, user.Id);
+                        }
+                        else if (message.Text == "/createroom")
+                        {
+                            await OrganizationInteractionDB.Theme0(user.Id);
+                            await OrganizationInteractionDB.AddRoom1(botClient, chat.Id, user.Id);
+                        }
+                        else if (message.Text == "/changename")
+                        {
+                            await OrganizationInteractionDB.Theme0(user.Id);
+                            await OrganizationInteractionDB.ChangeName1(botClient, chat.Id, user.Id);
+                        }
+                        else if (message.Text == "/rooms")
+                        {
+                            await OrganizationInteractionDB.Theme0(user.Id);
+                            await OrganizationInteractionDB.AllRooms(botClient, chat.Id, user.Id);
+                        }
+                        else
+                        {
+                            int theme = await OrganizationInteractionDB.GetTheme(user.Id);
+                            if (theme == 1)
+                            {
+                                await OrganizationInteractionDB.AddRoom2(botClient, chat.Id, user.Id, message.Text);
+                                await OrganizationInteractionDB.AllRooms(botClient, chat.Id, user.Id);
+                            }
+                            else if (theme == 2)
+                            {
+                                await OrganizationInteractionDB.ChangeRoom2(botClient, chat.Id, user.Id, message.Text);
+                                await OrganizationInteractionDB.AllRooms(botClient, chat.Id, user.Id);
+                            }
+                            else if (theme == 3)
+                            {
+                                await OrganizationInteractionDB.AddWindow3(botClient, chat.Id, user.Id, message.Text);
+                            }
+                            else if (theme == 4)
+                            {
+                                OrganizationInteractionDB.AddWindow4(botClient, chat.Id, user.Id, message.Text);
+                            }
+                            else if (theme == 5)
+                            {
+                                await OrganizationInteractionDB.ChangeTime2(botClient, chat.Id, user.Id, message.Text);
+                            }
+                            else if (theme == 6)
+                            {
+                                await OrganizationInteractionDB.ChangeTime3(botClient, chat.Id, user.Id, message.Text);
+                            }
+                            else if (theme == 7)
+                            {
+                                await OrganizationInteractionDB.ChangeName2(botClient, chat.Id, user.Id, message.Text);
+                            }
+                        }
+
+                        break;
+                    }
                     default:
-                        {
-                            await botClient.SendTextMessageAsync(
-                                chat.Id,
-                                "Используй только текст!",
-                                cancellationToken: cancellationToken);
-                            break;
-                        }
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chat.Id,
+                            "Используй только текст!",
+                            cancellationToken: cancellationToken);
+                        break;
+                    }
                 }
             }
         }
     }
 
-    async Task UpdateHandlerCallbackQuery(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    protected override async Task UpdateHandlerCallbackQuery(ITelegramBotClient botClient, Update update,
+        CancellationToken cancellationToken)
     {
         CallbackQuery? callbackQuery = update.CallbackQuery;
-        if (callbackQuery != null && callbackQuery.Message != null && callbackQuery.Data != null)
+        if (callbackQuery is { Message: not null, Data: not null })
         {
             User user = callbackQuery.From;
 
@@ -148,124 +131,86 @@ internal class TelegramOrganizationBot
             {
                 return;
             }
-            await organization.Theme0(user.Id);
+
+            await OrganizationInteractionDB.Theme0(user.Id);
             switch (data[0])
             {
                 case "R1":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.AddQueue(botClient, chat.Id, user.Id, data[1]);
-                        await organization.AllRooms(botClient, chat.Id, user.Id);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.AddQueue(botClient, chat.Id, user.Id, data[1]);
+                    await OrganizationInteractionDB.AllRooms(botClient, chat.Id, user.Id);
+                    break;
+                }
                 case "R2":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.ChangeRoom1(botClient, chat.Id, user.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.ChangeRoom1(botClient, chat.Id, user.Id, data[1]);
+                    break;
+                }
                 case "R3":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.DeleteRoom(botClient, chat.Id, data[1]);
-                        await organization.AllRooms(botClient, chat.Id, user.Id);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.DeleteRoom(botClient, chat.Id, data[1]);
+                    await OrganizationInteractionDB.AllRooms(botClient, chat.Id, user.Id);
+                    break;
+                }
                 case "R4":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.AllQueueInRoom(botClient, chat.Id, user.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.AllQueueInRoom(botClient, chat.Id, user.Id, data[1]);
+                    break;
+                }
                 case "R5":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.FreezAllQueueInRoom(botClient, chat.Id, data[1]);
-                        await organization.AllRooms(botClient, chat.Id, user.Id);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.FreezeAllQueueInRoom(botClient, chat.Id, data[1]);
+                    await OrganizationInteractionDB.AllRooms(botClient, chat.Id, user.Id);
+                    break;
+                }
                 case "R6":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.AddWindow1(botClient, chat.Id, user.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.AddWindow1(botClient, chat.Id, user.Id, data[1]);
+                    break;
+                }
                 case "R7":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.DeleteQueue(botClient, chat.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.DeleteQueue(botClient, chat.Id, data[1]);
+                    break;
+                }
                 case "R8":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.FreezUnfreez(botClient, chat.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.FreezeUnfreeze(botClient, chat.Id, data[1]);
+                    break;
+                }
                 case "R9":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.AllWindowsInQueue(botClient, chat.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.AllWindowsInQueue(botClient, chat.Id, data[1]);
+                    break;
+                }
                 case "R10":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.AddWindow2(botClient, chat.Id, user.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.AddWindow2(botClient, chat.Id, user.Id, data[1]);
+                    break;
+                }
                 case "R11":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.ChangeTime1(botClient, chat.Id, user.Id, data[1]);
-                        break;
-                    }
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.ChangeTime1(botClient, chat.Id, user.Id, data[1]);
+                    break;
+                }
                 case "R12":
-                    {
-                        await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
-                        await organization.DeleteWindow(botClient, chat.Id, data[1]);
-                        break;
-                    }
-
+                {
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                    await OrganizationInteractionDB.DeleteWindow(botClient, chat.Id, data[1]);
+                    break;
+                }
             }
         }
-    }
-
-    async Task UpdateHandler(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
-    {
-        try
-        {
-            switch (update.Type)
-            {
-                case UpdateType.Message:
-                    {
-                        await UpdateHandlerMessage(botClient, update, cancellationToken);
-                        break;
-                    }
-                case UpdateType.CallbackQuery:
-                    {
-                        await UpdateHandlerCallbackQuery(botClient, update, cancellationToken);
-                        break;
-                    }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
-    }
-
-    Task ErrorHandler(ITelegramBotClient botClient, Exception error, CancellationToken cancellationToken)
-    {
-        var ErrorMessage = error switch
-        {
-            ApiRequestException apiRequestException
-                => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-            _ => error.ToString()
-        };
-
-        Console.WriteLine(ErrorMessage);
-        return Task.CompletedTask;
     }
 }
-
